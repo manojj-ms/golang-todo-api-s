@@ -4,6 +4,7 @@ import (
  "github.com/gin-gonic/gin"
  "github.com/jinzhu/gorm"
  _ "github.com/jinzhu/gorm/dialects/sqlite"
+    "github.com/gin-gonic/gin/binding"
 )
 var db *gorm.DB
 var err error
@@ -25,12 +26,34 @@ db.AutoMigrate(&Person{})
  r.GET("/people/", GetPeople)
  r.GET("/people/:id", GetPerson)
  r.POST("/people", CreatePerson)
+ r.PUT("/people/:id", UpdatePerson)
+ r.DELETE("/people/:id", DeletePerson)
 r.Run(":8080")
+}
+
+func DeletePerson(c *gin.Context) {
+ id := c.Params.ByName("id")
+ var person Person
+ d := db.Where("id = ?", id).Delete(&person)
+ fmt.Println(d)
+ c.JSON(200, gin.H{"id #" + id: "deleted"})
+}
+
+func UpdatePerson(c *gin.Context) {
+ var person Person
+ id := c.Params.ByName("id")
+ if err := db.Where("id = ?", id).First(&person).Error; err != nil {
+    c.AbortWithStatus(404)
+    fmt.Println(err)
+ }
+ c.ShouldBindBodyWith(&person, binding.JSON)
+ db.Save(&person)
+ c.JSON(200, person)
 }
 
 func CreatePerson(c *gin.Context) {
  var person Person
- c.BindJSON(&person)
+ c.ShouldBindBodyWith(&person, binding.JSON)
 
  db.Create(&person)
  c.JSON(200, person)
