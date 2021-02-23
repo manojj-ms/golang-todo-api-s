@@ -36,6 +36,7 @@ func DeletePerson(c *gin.Context) {
  var person Person
  d := db.Where("id = ?", id).Delete(&person)
  fmt.Println(d)
+ c.ShouldBindBodyWith(&person, binding.JSON)
  c.JSON(200, gin.H{"id #" + id: "deleted"})
 }
 
